@@ -898,11 +898,11 @@ async function downloadAllAsZip() {
     `;
     try {
         const zip = new JSZip();
-        const folder = zip.folder('imagecleaner_cleaned');
+        const folder = zip.folder('photos');
         processedImages.forEach((img) => folder.file(img.newName, img.blob));
         const zipBlob = await zip.generateAsync({ type: 'blob' });
         const timestamp = new Date().toISOString().slice(0, 10);
-        saveAs(zipBlob, `imagecleaner_${timestamp}.zip`);
+        saveAs(zipBlob, `photos_${timestamp}.zip`);
     } catch (err) {
         console.error('Error creating ZIP:', err);
         alert('Error creating ZIP. Download images individually instead.');
