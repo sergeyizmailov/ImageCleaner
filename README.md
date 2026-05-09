@@ -2,7 +2,7 @@
 
 Browser-only tool that strips AI-image metadata, injects realistic camera EXIF, and disrupts diffusion-model fingerprints. Zero upload — everything runs locally in your browser.
 
-**Live demo:** https://sergeyizmailov.github.io/ImageCleaner/
+**Open the app:** https://sergeyizmailov.github.io/ImageCleaner/
 
 ## What it does
 
