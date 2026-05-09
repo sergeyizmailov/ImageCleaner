@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GhostImage — Strip AI Fingerprints</title>
+    <meta name="description"
+        content="Client-side tool to wipe AI image metadata, inject real camera EXIF, and disrupt diffusion fingerprints.">
+
+    <!-- Google Fonts: Fraunces (display serif), Onest (geometric sans), JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Onest:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+
+    <!-- JSZip, FileSaver.js, piexifjs from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/piexifjs/1.0.6/piexif.min.js"></script>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="bg-grain"></div>
+
+    <div class="container">
+        <!-- Hero: tight, editorial, left-aligned -->
+        <header class="hero">
+            <div class="logo">
+                <svg class="logo-mark" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="1.5" y="1.5" width="29" height="29" rx="2" stroke="currentColor" stroke-width="1.25" />
+                    <circle cx="16" cy="16" r="7" stroke="currentColor" stroke-width="1.25" />
+                    <circle cx="16" cy="16" r="2.25" fill="currentColor" />
+                </svg>
+                <span class="logo-text">Ghost<em>Image</em></span>
+                <span class="logo-tag">v2</span>
+            </div>
+
+            <h1 class="hero-title">Make AI images <em>undetectable.</em></h1>
+            <p class="hero-subtitle">Wipe metadata. Forge real camera EXIF. Disrupt diffusion fingerprints.</p>
+
+            <div class="hero-meta">
+                <span class="meta-item"><span class="meta-dot"></span>100% client-side</span>
+                <span class="meta-divider">·</span>
+                <span class="meta-item">Zero upload</span>
+                <span class="meta-divider">·</span>
+                <span class="meta-item">14 camera profiles</span>
+            </div>
+        </header>
+
+        <!-- Upload -->
+        <section class="upload-section" id="uploadSection">
+            <div class="profile-picker">
+                <label class="profile-label" for="cameraProfileSelect">
+                    <span class="profile-label-key">CAMERA</span>
+                </label>
+                <div class="profile-select-wrap">
+                    <select id="cameraProfileSelect" class="profile-select">
+                        <!-- populated by script.js -->
+                    </select>
+                    <svg class="profile-select-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
+                        <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                </div>
+            </div>
+
+            <div class="profile-info" id="profileInfo">
+                <div class="profile-info-row">
+                    <span class="profile-info-key">Tier</span>
+                    <span class="profile-info-value" id="profileInfoTier">—</span>
+                </div>
+                <div class="profile-info-row">
+                    <span class="profile-info-key">JPEG Quality</span>
+                    <span class="profile-info-value" id="profileInfoQuality">—</span>
+                </div>
+                <div class="profile-info-row">
+                    <span class="profile-info-key">Chroma</span>
+                    <span class="profile-info-value" id="profileInfoChroma">—</span>
+                </div>
+                <div class="profile-info-row">
+                    <span class="profile-info-key">Lenses</span>
+                    <span class="profile-info-value" id="profileInfoLenses">—</span>
+                </div>
+                <div class="profile-info-row">
+                    <span class="profile-info-key">Est. size / 2048²</span>
+                    <span class="profile-info-value" id="profileInfoSize">—</span>
+                </div>
+            </div>
+
+            <div class="upload-zone" id="uploadZone">
+                <input type="file" id="fileInput" multiple accept="image/jpeg,image/png,image/webp,image/avif" hidden>
+                <div class="upload-content">
+                    <div class="upload-icon">
+                        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M24 8v22M13 19l11-11 11 11" stroke="currentColor" stroke-width="1.5"
+                                stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M8 30v6a4 4 0 0 0 4 4h24a4 4 0 0 0 4-4v-6" stroke="currentColor"
+                                stroke-width="1.5" stroke-linecap="round" />
+                        </svg>
+                    </div>
+                    <h3 class="upload-title">Drop images</h3>
+                    <p class="upload-text">or click to browse</p>
+                    <p class="upload-limit">JPG · PNG · WebP · AVIF &nbsp;—&nbsp; max 20 files, 50MB each</p>
+                </div>
+                <div class="upload-hover-overlay"></div>
+            </div>
+        </section>
+
+        <!-- Processing -->
+        <section class="processing-section" id="processingSection">
+            <div class="processing-card">
+                <div class="processing-animation">
+                    <svg class="processing-svg" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="24" cy="24" r="20" stroke="currentColor" stroke-width="1" opacity="0.15" />
+                        <circle class="processing-arc" cx="24" cy="24" r="20" stroke="currentColor"
+                            stroke-width="1.25" stroke-linecap="round" />
+                    </svg>
+                </div>
+
+                <h3 class="processing-title">Processing</h3>
+                <p class="processing-status" id="processingStatus">Preparing…</p>
+
+                <div class="progress-container">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+
+                <div class="processing-stats">
+                    <span id="processedCount">0</span> / <span id="totalCount">0</span> · images processed
+                </div>
+            </div>
+        </section>
+
+        <!-- Results -->
+        <section class="results-section" id="resultsSection">
+            <div class="results-header">
+                <div class="results-header-content">
+                    <h2 class="results-title">
+                        <span class="results-title-mark">●</span>
+                        Done
+                    </h2>
+                </div>
+
+                <div class="results-actions">
+                    <button class="btn btn-primary" id="downloadAllBtn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="7 10 12 15 17 10" />
+                            <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                        Download ZIP
+                    </button>
+                    <button class="btn btn-ghost" id="processMoreBtn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                        New batch
+                    </button>
+                </div>
+            </div>
+
+            <div class="results-summary" id="resultsSummary"></div>
+            <div class="results-grid" id="resultsGrid"></div>
+        </section>
+
+        <footer class="footer">
+            <p>Your images never leave this device.</p>
+            <p class="footer-small">GhostImage · client-side · 2026</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
