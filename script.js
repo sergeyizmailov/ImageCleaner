@@ -1,5 +1,5 @@
 /**
- * GhostImage — Privacy-First AI Trace Remover
+ * ImageCleaner — Privacy-First AI Trace Remover
  *
  * Pipeline per image (all in Web Worker / OffscreenCanvas):
  *   decode (EXIF-oriented) → subtle resize (±1%) → low-pass blur (0.3–0.5px)
@@ -898,11 +898,11 @@ async function downloadAllAsZip() {
     `;
     try {
         const zip = new JSZip();
-        const folder = zip.folder('ghostimage_cleaned');
+        const folder = zip.folder('imagecleaner_cleaned');
         processedImages.forEach((img) => folder.file(img.newName, img.blob));
         const zipBlob = await zip.generateAsync({ type: 'blob' });
         const timestamp = new Date().toISOString().slice(0, 10);
-        saveAs(zipBlob, `ghostimage_${timestamp}.zip`);
+        saveAs(zipBlob, `imagecleaner_${timestamp}.zip`);
     } catch (err) {
         console.error('Error creating ZIP:', err);
         alert('Error creating ZIP. Download images individually instead.');

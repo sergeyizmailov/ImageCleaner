@@ -1,4 +1,4 @@
-# GhostImage
+# ImageCleaner
 
 Browser-only tool that strips AI-image metadata, injects realistic camera EXIF, and disrupts diffusion-model fingerprints. Zero upload — everything runs locally in your browser.
 
